@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#d62828">
+<meta name="description" content="Cardápio do Delivery do Gordinho. Escolha seus lanches e envie o pedido pelo WhatsApp.">
+<title>Delivery do Gordinho - Cardápio</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { background: #f4f4f4; padding-bottom: 130px; color: #333; }
+  body.sem-rolagem { overflow: hidden; }
+
+  /* ---------- HEADER ---------- */
+  header {
+    background: linear-gradient(135deg, #d62828, #a01d1d);
+    color: white;
+    padding: 18px 20px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  }
+  header h1 { font-size: 1.4rem; }
+  header p { font-size: .82rem; opacity: .9; margin-top: 4px; }
+
+  .container { max-width: 820px; margin: 0 auto; padding: 16px; }
+
+  /* ---------- CATEGORIAS (ABRIR / FECHAR) ---------- */
+  .categoria {
+    background: #fff;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+    overflow: hidden;
+  }
+
+  .categoria-header {
+    width: 100%;
+    border: 0;
+    background: #fff;
+    text-align: left;
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 1.02rem;
+    color: #d62828;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .15s;
+  }
+  .categoria-header:hover { background: #fdf3f3; }
+  .categoria-header:focus-visible { outline: 3px solid #d62828; outline-offset: -3px; }
+
+  .categoria-header .titulo { display: flex; align-items: center; gap: 10px; }
+
+  .categoria-header .badge {
+    display: inline-block;
+    background: #d62828;
+    color: white;
+    font-size: .7rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 22px;
+    text-align: center;
+  }
+
+  .categoria-header .seta { font-size: 1.1rem; transition: transform .25s; color: #999; }
+  .categoria.aberta .categoria-header .seta { transform: rotate(180deg); }
+
+  .categoria-conteudo {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .3s ease;
+  }
+  .categoria.aberta .categoria-conteudo { grid-template-rows: 1fr; }
+
+  .categoria-conteudo-inner {
+    overflow: hidden;
+    min-height: 0;
+    visibility: hidden;
+    transition: visibility 0s linear .3s;
+  }
+  .categoria.aberta .categoria-conteudo-inner { visibility: visible; transition-delay: 0s; }
+
+  .lista { padding: 0 12px 12px; }
+
+  /* ---------- PRODUTO ---------- */
+  .produto {
+    background: #fafafa;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid #eee;
+  }
+  .produto:last-child { margin-bottom: 0; }
+
+  .produto-info { flex: 1; min-width: 0; }
+  .produto-info h3 { font-size: .95rem; margin-bottom: 4px; color: #222; }
+  .produto-info p { font-size: .78rem; color: #777; line-height: 1.3; }
+  .produto-info .preco {
+    color: #d62828; font-weight: bold; margin-top: 6px;
+    display: block; font-size: .92rem;
+  }
+  .produto-info .preco-antigo {
+    color: #999; text-decoration: line-through;
+    font-size: .78rem; margin-right: 6px;
+  }
+
+  .controles { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .btn-qtd {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: #d62828;
+    color: white;
+    font-size: 1.15rem;
+    cursor: pointer;
+    font-weight: bold;
+    line-height: 1;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .15s, transform .1s, opacity .15s;
+  }
+  .btn-qtd:hover { background: #a01d1d; }
+  .btn-qtd:active { transform: scale(.9); }
+  .btn-qtd:disabled { opacity: .3; cursor: default; transform: none; background: #d62828; }
+  .qtd { font-weight: bold; min-width: 22px; text-align: center; font-size: .95rem; }
+
+  .erro-carga {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    line-height: 1.6;
+    box-shadow: 0 2px 6px rgba(0,0,0,.06);
+  }
+  .erro-carga a, .sem-js a { color: #d62828; font-weight: bold; }
+  .sem-js { background: #fff8e1; padding: 14px; text-align: center; }
+
+  /* ---------- RODAPÉ ---------- */
+  .rodape {
+    text-align: center;
+    color: #888;
+    font-size: .8rem;
+    line-height: 1.6;
+    padding: 18px 10px 6px;
+  }
+  .rodape strong { color: #555; }
+
+  /* ---------- BARRA INFERIOR ---------- */
+  .barra-fixa {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #fff;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -2px 12px rgba(0,0,0,.15);
+    z-index: 20;
+  }
+  .barra-fixa-inner {
+    max-width: 820px; margin: 0 auto;
+    display: flex; justify-content: space-between;
+    align-items: center; gap: 12px;
+  }
+  .total { font-size: .95rem; font-weight: bold; color: #333; }
+  .total span { color: #d62828; display: block; font-size: 1.15rem; }
+  .total .itens { font-size: .75rem; color: #999; font-weight: normal; }
+  .total .minimo { font-size: .74rem; color: #d62828; font-weight: 600; }
+
+  .btn-enviar {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 30px;
+    font-size: .95rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    touch-action: manipulation;
+    transition: background .15s, transform .1s;
+  }
+  .btn-enviar:hover { background: #1da851; }
+  .btn-enviar:active { transform: scale(.97); }
+  .btn-enviar:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+  /* ---------- MODAL (FINALIZAR PEDIDO) ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 100;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn .2s;
+  }
+  .modal-overlay.aberto { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: #f4f4f4;
+    width: 100%;
+    max-width: 820px;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 20px 20px 0 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    animation: slideUp .3s;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .modal-header {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    border-radius: 20px 20px 0 0;
+    z-index: 2;
+  }
+  .modal-header h2 { font-size: 1.1rem; color: #d62828; }
+  .btn-fechar {
+    background: #f0f0f0;
+    border: none;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #555;
+    line-height: 1;
+  }
+  .btn-fechar:hover { background: #e0e0e0; }
+
+  .modal-corpo { padding: 16px 16px 0; }
+
+  /* Resumo */
+  .resumo {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  }
+  .resumo h3 { font-size: .95rem; color: #333; margin-bottom: 10px; }
+  .resumo-item {
+    display: flex; justify-content: space-between; gap: 12px;
+    font-size: .88rem; padding: 5px 0;
+    color: #555;
+  }
+  .resumo-item strong { color: #333; }
+  .resumo-item span:last-child { white-space: nowrap; }
+  .resumo-linha {
+    display: flex; justify-content: space-between;
+    font-size: .88rem; padding: 5px 0; color: #555;
+  }
+  .resumo-total {
+    display: flex; justify-content: space-between;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid #eee;
+    font-size: 1rem; font-weight: bold;
+  }
+  .resumo-total span:last-child { color: #d62828; }
+
+  /* Formulário */
+  .form-pedido {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+  }
+  .form-pedido h2 { color: #d62828; margin-bottom: 14px; font-size: 1.05rem; }
+
+  .campo { margin-bottom: 14px; }
+  .campo label {
+    display: block; font-size: .85rem;
+    margin-bottom: 6px; color: #333; font-weight: 600;
+  }
+  .campo input, .campo textarea, .campo select {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px; /* evita o zoom automático no iPhone */
+    outline: none;
+    font-family: inherit;
+    background: #fff;
+    color: #333;
+    transition: border-color .15s;
+  }
+  .campo input:focus, .campo textarea:focus, .campo select:focus { border-color: #d62828; }
+  .campo .invalido { border-color: #d62828; background: #fff5f5; }
+  .campo textarea { resize: vertical; min-height: 60px; }
+
+  .checkbox-endereco {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff8e1;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    font-size: .86rem;
+    cursor: pointer;
+    border: 1px solid #ffe082;
+    font-weight: 600;
+    color: #7a5c00;
+  }
+  .checkbox-endereco input { width: 18px; height: 18px; accent-color: #d62828; cursor: pointer; }
+
+  #enderecoCampos.desativado { opacity: .35; pointer-events: none; }
+
+  .aviso { color: #d62828; font-size: .88rem; font-weight: 600; min-height: 18px; margin-bottom: 4px; }
+
+  .btn-confirmar {
+    width: 100%;
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    touch-action: manipulation;
+    transition: background .15s;
+  }
+  .btn-confirmar:hover { background: #1da851; }
+  .btn-confirmar:disabled { background: #ccc; cursor: not-allowed; }
+  .btn-secundario { background: #f0f0f0; color: #444; }
+  .btn-secundario:hover { background: #e2e2e2; }
+
+  /* Tela "pedido pronto" */
+  .ok-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 18px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+    line-height: 1.5;
+  }
+  .ok-box h2 { color: #1da851; font-size: 1.15rem; margin-bottom: 8px; }
+  .ok-box p { font-size: .9rem; color: #555; margin-bottom: 10px; }
+  .ok-box textarea {
+    width: 100%;
+    min-height: 150px;
+    margin-top: 6px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: Consolas, 'Courier New', monospace;
+    background: #fafafa;
+    color: #333;
+    resize: vertical;
+  }
+  .copiado { color: #1da851; font-weight: 600; font-size: .85rem; min-height: 18px; text-align: center; margin-top: 6px; }
+
+  .barra-fixa.escondida { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<noscript>
+  <div class="sem-js">Ative o JavaScript para ver o cardápio, ou peça direto pelo WhatsApp:
+    <a href="https://wa.me/5527997100751">(27) 99710-0751</a></div>
+</noscript>
+
+<header>
+  <h1>🍔 Delivery do Gordinho</h1>
+  <p id="infoLoja">⭐ 5.0 • Entrega GRÁTIS • 60-90min • Pedido mínimo R$&nbsp;20,00</p>
+</header>
+
+<main class="container">
+  <div id="cardapio"></div>
+
+  <footer class="rodape">
+    <strong>Delivery do Gordinho</strong><br>
+    WhatsApp: (27) 99710-0751<br>
+    <span id="siteOficial" hidden></span>
+    Não entregamos somente bebidas.
+  </footer>
+</main>
+
+<!-- BARRA FIXA -->
+<div class="barra-fixa" id="barraFixa">
+  <div class="barra-fixa-inner">
+    <div class="total">
+      Total:<span id="total">R$ 0,00</span>
+      <div class="itens" id="qtdItens">0 itens</div>
+      <div class="minimo" id="hintMinimo" hidden></div>
+    </div>
+    <button type="button" class="btn-enviar" id="btnFinalizar" disabled>🛒 Finalizar pedido</button>
+  </div>
+</div>
+
+<!-- MODAL: FINALIZAR PEDIDO -->
+<div class="modal-overlay" id="modalCheckout" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitulo">
+    <div class="modal-header">
+      <h2 id="modalTitulo">📝 Finalizar pedido</h2>
+      <button type="button" class="btn-fechar" id="btnFechar" aria-label="Fechar">✕</button>
+    </div>
+
+    <div class="modal-corpo">
+
+      <!-- TELA 1: resumo + dados -->
+      <div id="viewForm">
+        <div class="resumo">
+          <h3>🛒 Resumo do pedido</h3>
+          <div id="resumoItens"></div>
+          <div class="resumo-linha"><span>Entrega</span><span>Grátis</span></div>
+          <div class="resumo-total">
+            <span>Total</span>
+            <span id="resumoTotal">R$ 0,00</span>
+          </div>
+        </div>
+
+        <form class="form-pedido" id="formPedido" novalidate>
+          <h2>Seus dados</h2>
+
+          <div class="campo">
+            <label for="nome">Seu nome *</label>
+            <input type="text" id="nome" maxlength="60" placeholder="Ex: João Silva" autocomplete="name" enterkeyhint="next">
+          </div>
+
+          <label class="checkbox-endereco">
+            <input type="checkbox" id="semEndereco">
+            Endereço já informado
+          </label>
+
+          <div id="enderecoCampos">
+            <div class="campo">
+              <label for="endereco">Endereço de entrega *</label>
+              <input type="text" id="endereco" maxlength="140" placeholder="Rua, número, bairro" autocomplete="street-address" enterkeyhint="next">
+            </div>
+            <div class="campo">
+              <label for="referencia">Ponto de referência</label>
+              <input type="text" id="referencia" maxlength="80" placeholder="Ex: Próximo ao mercado" enterkeyhint="next">
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="pagamento">Forma de pagamento *</label>
+            <select id="pagamento">
+              <option value="">Selecione...</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="PIX">PIX</option>
+              <option value="Cartão">Cartão</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" maxlength="200" placeholder="Ex: Sem cebola, troco para R$ 50..."></textarea>
+          </div>
+
+          <p class="aviso" id="aviso" role="alert"></p>
+
+          <button type="submit" class="btn-confirmar" id="btnConfirmar">📲 Enviar pedido pelo WhatsApp</button>
+        </form>
+      </div>
+
+      <!-- TELA 2: pedido pronto -->
+      <div id="viewOk" hidden>
+        <div class="ok-box">
+          <h2>✅ Pedido pronto!</h2>
+          <p><strong>Falta só um passo:</strong> no WhatsApp, toque em enviar. O pedido só chega na loja depois que a mensagem for enviada.</p>
+          <p>Se o WhatsApp não abriu, use um dos botões abaixo.</p>
+
+          <a class="btn-confirmar" id="linkWhats" href="#" target="_blank" rel="noopener noreferrer">📲 Abrir WhatsApp</a>
+          <button type="button" class="btn-confirmar btn-secundario" id="btnCopiar">📋 Copiar pedido</button>
+          <div class="copiado" id="copiado" role="status"></div>
+
+          <p style="margin-top:12px">Texto do pedido:</p>
+          <textarea id="textoPedido" readonly></textarea>
+
+          <button type="button" class="btn-confirmar btn-secundario" id="btnVoltar">✏️ Voltar e alterar o pedido</button>
+          <button type="button" class="btn-confirmar btn-secundario" id="btnNovo">🧹 Fazer um novo pedido</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ================= CONFIGURAÇÕES =================
+  var NUMERO_WHATSAPP = "5527997100751";  // DDI + DDD + número, só dígitos
+  var PEDIDO_MINIMO   = 20;               // em reais
+  var MAX_QTD         = 99;               // máximo por item
+  var PAGAMENTOS      = ["Dinheiro", "PIX", "Cartão"];
+
+  // Endereço oficial do site (ex.: "deliverydogordinho.com.br").
+  // Deixe vazio enquanto não tiver; quando preencher, aparece no rodapé.
+  var SITE_OFICIAL = "";
+
+  // ================= CARDÁPIO =================
+  // Para mudar um preço, edite o número em "preco". Use ponto: 15.50
+  var CARDAPIO = [
+    {
+      id: "combo",
+      titulo: "🍔 Combo",
+      produtos: [
+        { id: "c1", nome: "3 Hambúrguers", desc: "Bife, banana, alface, tomate, maionese, milho e palha", preco: 33.00, precoAntigo: 36.00 },
+        { id: "c2", nome: "3 X Bacon", desc: "Bife, queijo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 50.00, precoAntigo: 54.00 }
+      ]
+    },
+    {
+      id: "promocao",
+      titulo: "🔥 Promoção",
+      produtos: [
+        { id: "p1", nome: "X Bacon ★ Catupiry", desc: "Bife, queijo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 22.00 },
+        { id: "p2", nome: "2 X Total", desc: "Para afogar as mágoas em muito queijo e bacon", preco: 40.00 },
+        { id: "p3", nome: "3 X Total", desc: "Para afogar as mágoas em muito queijo e bacon", preco: 60.00 },
+        { id: "p4", nome: "4 X Total", desc: "Para afogar as mágoas em muito queijo e bacon", preco: 80.00 },
+        { id: "p5", nome: "5 X Total", desc: "Para afogar as mágoas em muito queijo e bacon", preco: 96.00, precoAntigo: 100.00 },
+        { id: "p6", nome: "X Bacon + Cheddar + Cebola", desc: "Bife, ovo, queijo, presunto, bacon, banana, alface, tomate, maionese, milho e palha", preco: 25.00 }
+      ]
+    },
+    {
+      id: "especiais",
+      titulo: "⭐ Lanches Especiais",
+      produtos: [
+        { id: "e1", nome: "Mata Fome", desc: "(2) Bifes, (2) ovos, bacon, cebola, banana, alface, tomate, maionese, milho e palha", preco: 30.00 },
+        { id: "e2", nome: "Misto Especial com Pão de Hambúrguer", desc: "Bife, ovo, bacon, (2) presuntos e (2) queijos", preco: 20.00 },
+        { id: "e3", nome: "X Total Triplo", desc: "(3) Bifes, (3) ovos, (2) queijos, (2) presuntos, bacon, banana, alface, tomate, maionese, milho e palha", preco: 40.00 }
+      ]
+    },
+    {
+      id: "tradicionais",
+      titulo: "🍔 Lanches Tradicionais",
+      produtos: [
+        { id: "t0", nome: "Hambúrguer", desc: "Bife, banana, alface, tomate, maionese, milho e palha", preco: 12.00 },
+        { id: "t1", nome: "X Burguer", desc: "Bife, queijo, banana, alface, tomate, maionese, milho e palha", preco: 14.00 },
+        { id: "t2", nome: "X Presunto", desc: "Bife, queijo, presunto, banana, alface, tomate, maionese, milho e palha", preco: 16.00 },
+        { id: "t3", nome: "X Bacon", desc: "Bife, queijo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 18.00 },
+        { id: "t4", nome: "X Egg", desc: "Bife, queijo, ovo, banana, alface, tomate, maionese, milho e palha", preco: 17.00 },
+        { id: "t5", nome: "X Egg Presunto", desc: "Bife, queijo, ovo, presunto, banana, alface, tomate, maionese, milho e palha", preco: 19.00 },
+        { id: "t6", nome: "X Egg Bacon", desc: "Bife, queijo, ovo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 19.00 },
+        { id: "t7", nome: "X Total", desc: "Bife, queijo, presunto, bacon, banana, alface, tomate, maionese, milho e palha", preco: 20.00 },
+        { id: "t8", nome: "X Total Duplo", desc: "Bife, (2) ovos, (2) queijos, (2) presuntos, bacon, banana, alface, tomate, maionese, milho e palha", preco: 30.00 }
+      ]
+    },
+    {
+      id: "caseiro",
+      titulo: "🥩 Lanches com Bife Caseiro",
+      produtos: [
+        { id: "bc0", nome: "Hambúrguer Caseiro", desc: "Bife caseiro, banana, alface, tomate, maionese, milho e palha", preco: 15.50 },
+        { id: "bc1", nome: "X Burguer Caseiro", desc: "Bife caseiro, queijo, banana, alface, tomate, maionese, milho e palha", preco: 16.50 },
+        { id: "bc2", nome: "X Presunto Caseiro", desc: "Bife caseiro, queijo, presunto, banana, alface, tomate, maionese, milho e palha", preco: 19.00 },
+        { id: "bc3", nome: "X Bacon Caseiro", desc: "Bife caseiro, queijo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 20.00 },
+        { id: "bc4", nome: "X Egg Caseiro", desc: "Bife caseiro, queijo, ovo, banana, alface, tomate, maionese, milho e palha", preco: 21.00 },
+        { id: "bc5", nome: "X Egg Presunto Caseiro", desc: "Bife caseiro, queijo, ovo, presunto, banana, alface, tomate, maionese, milho e palha", preco: 23.00 },
+        { id: "bc6", nome: "X Egg Bacon Caseiro", desc: "Bife caseiro, queijo, ovo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 25.00 },
+        { id: "bc7", nome: "X Total Caseiro", desc: "Bife caseiro, ovo, queijo, presunto, bacon, banana, alface, tomate, maionese, milho e palha", preco: 30.00 },
+        { id: "bc8", nome: "X Total Duplo Caseiro", desc: "Bife caseiro, (2) ovos, (2) queijos, (2) presuntos, bacon, banana, alface, tomate, maionese, milho e palha", preco: 40.00 }
+      ]
+    },
+    {
+      id: "calabresa",
+      titulo: "🌶️ Lanches com Calabresa",
+      produtos: [
+        { id: "ca1", nome: "Hambúrguer Calabresa", desc: "Calabresa, banana, alface, tomate, maionese, milho e palha", preco: 15.00 },
+        { id: "ca2", nome: "X Burguer Calabresa", desc: "Calabresa, queijo, banana, alface, tomate, maionese, milho e palha", preco: 17.00 },
+        { id: "ca3", nome: "X Presunto Calabresa", desc: "Calabresa, queijo, presunto, banana, alface, tomate, maionese, milho e palha", preco: 18.00 },
+        { id: "ca4", nome: "X Bacon Calabresa", desc: "Calabresa, queijo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 19.00 },
+        { id: "ca5", nome: "X Egg Calabresa", desc: "Calabresa, queijo, ovo, banana, alface, tomate, maionese, milho e palha", preco: 16.00 },
+        { id: "ca6", nome: "X Egg Presunto Calabresa", desc: "Calabresa, queijo, ovo, presunto, banana, alface, tomate, maionese, milho e palha", preco: 18.00 },
+        { id: "ca7", nome: "X Egg Bacon Calabresa", desc: "Calabresa, queijo, ovo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 19.00 },
+        { id: "ca8", nome: "X Total Calabresa", desc: "Calabresa, ovo, queijo, presunto, bacon, banana, alface, tomate, maionese, milho e palha", preco: 27.00 },
+        { id: "ca9", nome: "X Total Duplo Calabresa", desc: "Calabresa, (2) ovos, (2) queijos, (2) presuntos, bacon, banana, alface, tomate, maionese, milho e palha", preco: 30.00 }
+      ]
+    },
+    {
+      id: "picanha",
+      titulo: "🥩 Lanches com Bife de Picanha",
+      produtos: [
+        { id: "pi1", nome: "Hambúrguer de Picanha", desc: "Bife de picanha, banana, alface, tomate, maionese, milho e palha", preco: 15.00 },
+        { id: "pi2", nome: "X Burguer Bife de Picanha", desc: "Bife de picanha, queijo, banana, alface, tomate, maionese, milho e palha", preco: 16.00 },
+        { id: "pi3", nome: "X Presunto Bife de Picanha", desc: "Bife de picanha, queijo, presunto, banana, alface, tomate, maionese, milho e palha", preco: 18.00 },
+        { id: "pi4", nome: "X Bacon Bife de Picanha", desc: "Bife de picanha, queijo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 20.00 },
+        { id: "pi5", nome: "X Egg Bife de Picanha", desc: "Bife de picanha, queijo, ovo, banana, alface, tomate, maionese, milho e palha", preco: 20.00 },
+        { id: "pi6", nome: "X Egg Presunto Bife de Picanha", desc: "Bife de picanha, queijo, ovo, presunto, banana, alface, tomate, maionese, milho e palha", preco: 19.00 },
+        { id: "pi7", nome: "X Egg Bacon Bife de Picanha", desc: "Bife de picanha, queijo, ovo, bacon, banana, alface, tomate, maionese, milho e palha", preco: 25.00 },
+        { id: "pi8", nome: "X Total Bife de Picanha", desc: "Bife de picanha, ovo, queijo, presunto, bacon, banana, alface, tomate, maionese, milho e palha", preco: 27.00 },
+        { id: "pi9", nome: "X Total Duplo Bife de Picanha", desc: "Bife de picanha, (2) ovos, (2) queijos, (2) presuntos, bacon, banana, alface, tomate, maionese, milho e palha", preco: 38.00 }
+      ]
+    },
+    {
+      id: "saches",
+      titulo: "🥫 Sachês",
+      produtos: [
+        { id: "s1", nome: "Maionese Caseira", preco: 2.50 },
+        { id: "s2", nome: "Mostarda (sachê)", preco: 1.00 }
+      ]
+    }
+  ];
+
+  // ================= UTILITÁRIOS =================
+  var CHAVE_ARMAZENAMENTO = "gordinho_pedido_v1";
+  var MIN_CENTAVOS = Math.round(PEDIDO_MINIMO * 100);
+
+  function $(id) { return document.getElementById(id); }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // Valores sempre em centavos (inteiros): evita erros de arredondamento.
+  function brl(c) {
+    return 'R$ ' + (c / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  // Remove caracteres que quebram a formatação do WhatsApp e espaços sobrando.
+  function limpar(s) {
+    return String(s || '').replace(/[*_~`]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  // ================= ÍNDICE DO CARDÁPIO (com validação) =================
+  var POR_ID = {};
+  var LISTA = [];
+
+  function indexar() {
+    CARDAPIO.forEach(function (cat) {
+      cat.produtos = cat.produtos.filter(function (p) {
+        var ok = p && typeof p.id === 'string' && typeof p.nome === 'string' &&
+                 isFinite(p.preco) && p.preco > 0 && !POR_ID[p.id];
+        if (!ok) { console.warn('Item ignorado no cardápio:', p); return false; }
+        p.cents = Math.round(p.preco * 100);
+        p.antigoCents = p.precoAntigo ? Math.round(p.precoAntigo * 100) : 0;
+        p.cat = cat.id;
+        POR_ID[p.id] = p;
+        LISTA.push(p);
+        return true;
+      });
+    });
+  }
+
+  // ================= ESTADO + ARMAZENAMENTO LOCAL =================
+  var carrinho = {};      // id -> quantidade (os preços sempre vêm do cardápio)
+  var enviando = false;
+  var ultimaMensagem = '';
+
+  function lerForm() {
+    return {
+      nome: $('nome').value,
+      endereco: $('endereco').value,
+      referencia: $('referencia').value,
+      pagamento: $('pagamento').value,
+      jaInformado: $('semEndereco').checked
+    };
+  }
+
+  function salvar() {
+    try {
+      localStorage.setItem(CHAVE_ARMAZENAMENTO, JSON.stringify({ v: 1, cart: carrinho, form: lerForm() }));
+    } catch (e) { /* sem armazenamento: o site continua funcionando normalmente */ }
+  }
+
+  function restaurar() {
+    try {
+      var raw = localStorage.getItem(CHAVE_ARMAZENAMENTO);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d || d.v !== 1) return;
+
+      Object.keys(d.cart || {}).forEach(function (id) {
+        var q = d.cart[id];
+        if (POR_ID[id] && typeof q === 'number' && isFinite(q) && q >= 1) {
+          carrinho[id] = Math.min(MAX_QTD, Math.floor(q));
+        }
+      });
+
+      var f = d.form || {};
+      if (typeof f.nome === 'string') $('nome').value = f.nome.slice(0, 60);
+      if (typeof f.endereco === 'string') $('endereco').value = f.endereco.slice(0, 140);
+      if (typeof f.referencia === 'string') $('referencia').value = f.referencia.slice(0, 80);
+      if (PAGAMENTOS.indexOf(f.pagamento) !== -1) $('pagamento').value = f.pagamento;
+      $('semEndereco').checked = f.jaInformado === true;
+    } catch (e) { /* dados antigos ou corrompidos: ignora */ }
+  }
+
+  // ================= CARDÁPIO NA TELA =================
+  function renderizar() {
+    $('cardapio').innerHTML = CARDAPIO.map(function (cat, i) {
+      if (!cat.produtos.length) return '';
+      var aberta = i === 0;
+      return '' +
+        '<section class="categoria' + (aberta ? ' aberta' : '') + '" id="cat-' + esc(cat.id) + '">' +
+          '<button type="button" class="categoria-header" data-cat="' + esc(cat.id) + '"' +
+            ' aria-expanded="' + aberta + '" aria-controls="lista-' + esc(cat.id) + '">' +
+            '<span class="titulo"><span>' + esc(cat.titulo) + '</span>' +
+            '<span class="badge" id="badge-' + esc(cat.id) + '" hidden>0</span></span>' +
+            '<span class="seta" aria-hidden="true">▼</span>' +
+          '</button>' +
+          '<div class="categoria-conteudo" id="lista-' + esc(cat.id) + '">' +
+            '<div class="categoria-conteudo-inner"><div class="lista">' +
+              cat.produtos.map(htmlProduto).join('') +
+            '</div></div>' +
+          '</div>' +
+        '</section>';
+    }).join('');
+  }
+
+  function htmlProduto(p) {
+    var id = esc(p.id), nome = esc(p.nome);
+    return '' +
+      '<div class="produto">' +
+        '<div class="produto-info">' +
+          '<h3>' + nome + '</h3>' +
+          (p.desc ? '<p>' + esc(p.desc) + '</p>' : '') +
+          '<span class="preco">' +
+            (p.antigoCents ? '<span class="preco-antigo">' + brl(p.antigoCents) + '</span>' : '') +
+            brl(p.cents) +
+          '</span>' +
+        '</div>' +
+        '<div class="controles">' +
+          '<button type="button" class="btn-qtd" data-acao="menos" data-id="' + id + '" aria-label="Remover um: ' + nome + '" disabled>−</button>' +
+          '<span class="qtd" id="qtd-' + id + '" aria-live="polite">0</span>' +
+          '<button type="button" class="btn-qtd" data-acao="mais" data-id="' + id + '" aria-label="Adicionar um: ' + nome + '">+</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function alternarCategoria(id) {
+    var el = $('cat-' + id);
+    if (!el) return;
+    var aberta = el.classList.toggle('aberta');
+    var btn = el.querySelector('.categoria-header');
+    if (btn) btn.setAttribute('aria-expanded', String(aberta));
+  }
+
+  function qtd(id) { return carrinho[id] || 0; }
+
+  function atualizarProduto(p) {
+    var el = $('qtd-' + p.id);
+    if (!el) return;
+    var q = qtd(p.id);
+    el.textContent = q;
+    el.previousElementSibling.disabled = q <= 0;
+    el.nextElementSibling.disabled = q >= MAX_QTD;
+  }
+
+  function atualizarBadge(catId) {
+    var total = 0;
+    LISTA.forEach(function (p) { if (p.cat === catId) total += qtd(p.id); });
+    var b = $('badge-' + catId);
+    if (!b) return;
+    b.textContent = total;
+    b.hidden = total === 0;
+  }
+
+  function totais() {
+    var cents = 0, itens = 0;
+    LISTA.forEach(function (p) {
+      var q = qtd(p.id);
+      if (q > 0) { cents += p.cents * q; itens += q; }
+    });
+    return { cents: cents, itens: itens };
+  }
+
+  function atualizarBarra() {
+    var t = totais();
+    var falta = MIN_CENTAVOS - t.cents;
+    $('total').textContent = brl(t.cents);
+    $('qtdItens').textContent = t.itens + (t.itens === 1 ? ' item' : ' itens');
+    var hint = $('hintMinimo');
+    if (t.itens > 0 && falta > 0) {
+      hint.textContent = 'Faltam ' + brl(falta) + ' para o pedido mínimo';
+      hint.hidden = false;
+    } else {
+      hint.hidden = true;
+    }
+    $('btnFinalizar').disabled = t.itens === 0 || falta > 0;
+  }
+
+  function atualizarTudo() {
+    LISTA.forEach(atualizarProduto);
+    CARDAPIO.forEach(function (c) { atualizarBadge(c.id); });
+    atualizarBarra();
+  }
+
+  function alterar(id, delta) {
+    var p = POR_ID[id];
+    if (!p) return;
+    var n = Math.min(MAX_QTD, Math.max(0, qtd(id) + delta));
+    if (n > 0) carrinho[id] = n; else delete carrinho[id];
+    atualizarProduto(p);
+    atualizarBadge(p.cat);
+    atualizarBarra();
+    salvar();
+  }
+
+  // ================= FINALIZAR PEDIDO =================
+  var ultimoFoco = null;
+
+  function mostrarTela(qual) {
+    $('viewForm').hidden = qual !== 'form';
+    $('viewOk').hidden = qual !== 'ok';
+    $('modalCheckout').querySelector('.modal').scrollTop = 0;
+  }
+
+  function resumo(t) {
+    $('resumoItens').innerHTML = LISTA.filter(function (p) { return qtd(p.id) > 0; }).map(function (p) {
+      return '<div class="resumo-item"><span><strong>' + qtd(p.id) + 'x</strong> ' + esc(p.nome) +
+             '</span><span>' + brl(p.cents * qtd(p.id)) + '</span></div>';
+    }).join('');
+    $('resumoTotal').textContent = brl(t.cents);
+  }
+
+  function abrirCheckout() {
+    var t = totais();
+    if (t.itens === 0 || t.cents < MIN_CENTAVOS) return;
+    ultimoFoco = document.activeElement;
+    resumo(t);
+    limparErros();
+    $('aviso').textContent = '';
+    alternarEndereco();
+    mostrarTela('form');
+    $('modalCheckout').classList.add('aberto');
+    $('modalCheckout').setAttribute('aria-hidden', 'false');
+    $('barraFixa').classList.add('escondida');
+    document.body.classList.add('sem-rolagem');
+    $('btnFechar').focus();
+  }
+
+  function fecharCheckout() {
+    $('modalCheckout').classList.remove('aberto');
+    $('modalCheckout').setAttribute('aria-hidden', 'true');
+    $('barraFixa').classList.remove('escondida');
+    document.body.classList.remove('sem-rolagem');
+    if (ultimoFoco && ultimoFoco.focus) { try { ultimoFoco.focus(); } catch (e) {} }
+  }
+
+  function alternarEndereco() {
+    var ja = $('semEndereco').checked;
+    $('enderecoCampos').classList.toggle('desativado', ja);
+    $('endereco').disabled = ja;
+    $('referencia').disabled = ja;
+  }
+
+  function limparErros() {
+    ['nome', 'endereco', 'pagamento'].forEach(function (id) {
+      $(id).classList.remove('invalido');
+      $(id).removeAttribute('aria-invalid');
+    });
+  }
+
+  function falha(campo, msg) {
+    $(campo).classList.add('invalido');
+    $(campo).setAttribute('aria-invalid', 'true');
+    $('aviso').textContent = msg;
+    try { $(campo).scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+    $(campo).focus();
+    return { ok: false };
+  }
+
+  function validar() {
+    limparErros();
+    $('aviso').textContent = '';
+    var nome = limpar($('nome').value);
+    var ja = $('semEndereco').checked;
+    var end = limpar($('endereco').value);
+    var pag = $('pagamento').value;
+
+    if (nome.length < 2) return falha('nome', 'Informe seu nome.');
+    if (!ja && end.length < 5) return falha('endereco', 'Informe o endereço de entrega (rua, número e bairro).');
+    if (PAGAMENTOS.indexOf(pag) === -1) return falha('pagamento', 'Escolha a forma de pagamento.');
+
+    return {
+      ok: true,
+      dados: {
+        nome: nome, ja: ja, end: end, pag: pag,
+        ref: limpar($('referencia').value),
+        obs: limpar($('observacoes').value)
+      }
+    };
+  }
+
+  function montarMensagem(t, d) {
+    var m = '*Novo pedido – Delivery do Gordinho*\n\n';
+    LISTA.forEach(function (p) {
+      var q = qtd(p.id);
+      if (q > 0) m += q + 'x ' + p.nome + ' – ' + brl(p.cents * q) + '\n';
+    });
+    m += '\n*Total:* ' + brl(t.cents);
+    m += '\n*Entrega:* grátis';
+    m += '\n*Nome:* ' + d.nome;
+    if (d.ja) {
+      m += '\n*Endereço:* já informado';
+    } else {
+      m += '\n*Endereço:* ' + d.end;
+      if (d.ref) m += '\n*Referência:* ' + d.ref;
+    }
+    m += '\n*Pagamento:* ' + d.pag;
+    if (d.obs) m += '\n*Obs.:* ' + d.obs;
+    return m;
+  }
+
+  // Abre o link como um clique de verdade (não é bloqueado como pop-up).
+  function abrirLink(url) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function enviar() {
+    if (enviando) return;
+    var t = totais();
+    if (t.itens === 0 || t.cents < MIN_CENTAVOS) { fecharCheckout(); return; }
+
+    var v = validar();
+    if (!v.ok) return;
+
+    enviando = true;
+    setTimeout(function () { enviando = false; }, 2500);
+
+    ultimaMensagem = montarMensagem(t, v.dados);
+    var url = 'https://wa.me/' + NUMERO_WHATSAPP + '?text=' + encodeURIComponent(ultimaMensagem);
+
+    $('linkWhats').href = url;
+    $('textoPedido').value = ultimaMensagem;
+    $('copiado').textContent = '';
+    mostrarTela('ok');
+    salvar();
+    abrirLink(url);
+  }
+
+  function copiarPedido() {
+    var aviso = $('copiado');
+    function deuCerto() { aviso.textContent = 'Pedido copiado! Cole na conversa com a loja.'; }
+    function manual() {
+      var ta = $('textoPedido');
+      ta.focus();
+      ta.select();
+      try { ta.setSelectionRange(0, ta.value.length); } catch (e) {}
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      aviso.textContent = ok ? 'Pedido copiado! Cole na conversa com a loja.'
+                             : 'Segure o texto abaixo, escolha "Copiar" e cole no WhatsApp.';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ultimaMensagem).then(deuCerto, manual);
+    } else {
+      manual();
+    }
+  }
+
+  function novoPedido() {
+    carrinho = {};
+    $('observacoes').value = '';
+    atualizarTudo();
+    salvar();
+    fecharCheckout();
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { window.scrollTo(0, 0); }
+  }
+
+  // ================= EVENTOS =================
+  function ligarEventos() {
+    $('cardapio').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button') : null;
+      if (!b) return;
+      if (b.dataset.cat) alternarCategoria(b.dataset.cat);
+      else if (b.dataset.acao) alterar(b.dataset.id, b.dataset.acao === 'mais' ? 1 : -1);
+    });
+
+    $('btnFinalizar').addEventListener('click', abrirCheckout);
+    $('btnFechar').addEventListener('click', fecharCheckout);
+    $('modalCheckout').addEventListener('click', function (e) {
+      if (e.target === this) fecharCheckout();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && $('modalCheckout').classList.contains('aberto')) fecharCheckout();
+    });
+
+    $('semEndereco').addEventListener('change', function () { alternarEndereco(); salvar(); });
+    ['nome', 'endereco', 'referencia'].forEach(function (id) {
+      $(id).addEventListener('input', function () { $(id).classList.remove('invalido'); salvar(); });
+    });
+    $('pagamento').addEventListener('change', function () { $('pagamento').classList.remove('invalido'); salvar(); });
+
+    $('formPedido').addEventListener('submit', function (e) { e.preventDefault(); enviar(); });
+    $('btnCopiar').addEventListener('click', copiarPedido);
+    $('btnVoltar').addEventListener('click', function () { mostrarTela('form'); });
+    $('btnNovo').addEventListener('click', novoPedido);
+  }
+
+  // ================= INÍCIO =================
+  function iniciar() {
+    indexar();
+    renderizar();
+    restaurar();
+    alternarEndereco();
+    atualizarTudo();
+    ligarEventos();
+
+    $('infoLoja').textContent = '⭐ 5.0 • Entrega GRÁTIS • 60-90min • Pedido mínimo ' + brl(MIN_CENTAVOS).replace(' ', '\u00a0');
+    if (SITE_OFICIAL) {
+      var s = $('siteOficial');
+      s.textContent = 'Site oficial: ' + SITE_OFICIAL;
+      s.hidden = false;
+      s.insertAdjacentHTML('afterend', '<br>');
+    }
+  }
+
+  try {
+    iniciar();
+  } catch (erro) {
+    console.error(erro);
+    $('cardapio').innerHTML =
+      '<div class="erro-carga">Não foi possível carregar o cardápio agora.<br>' +
+      'Faça seu pedido direto pelo WhatsApp: ' +
+      '<a href="https://wa.me/' + NUMERO_WHATSAPP + '">(27) 99710-0751</a></div>';
+  }
+})();
+</script>
+
+</body>
+</html>
